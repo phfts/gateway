@@ -8,3 +8,14 @@ global-rate-limit:
   max_requests: 120
   identification_methods:
     - IP
+```
+
+2. Download dependencies
+```
+$ make download
+```
+
+3. Run
+```
+$ make run
+```
