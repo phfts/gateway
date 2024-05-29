@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include "../utils/string.cpp"
+#include "../utils/time.cpp"
 #include "rate_limiter.h"
 #include "../config/yaml_loader.cpp"
 
@@ -60,6 +61,37 @@ int RateLimiter::getRateLimitIntervalInSeconds()
     return 60 * timeInterval;
 }
 
+bool RateLimiter::checkGlobally(std::string ip)
+{
+    int timestamp = getCurrentTimestamp();
+    if (timestampsPerIp[ip].empty())
+    {
+        timestampsPerIp[ip].push_back(timestamp);
+        return true;
+    }
+    else
+    {
+        int firstTimestamp = timestampsPerIp[ip][0];
+        if (timestamp - firstTimestamp > this->getRateLimitIntervalInSeconds())
+        {
+            timestampsPerIp[ip].push_back(timestamp);
+            while (!timestampsPerIp[ip].empty() && (timestamp -  timestampsPerIp[ip][0] > this->getRateLimitIntervalInSeconds()))
+            {
+                // TODO: O(N^2). Bad because can contain bursts. Use sorted set from redis
+                timestampsPerIp[ip].erase(timestampsPerIp[ip].begin());
+            }
+            
+            return true;
+        }
+        else
+        {
+            timestampsPerIp[ip].push_back(timestamp);
+            bool ans = timestampsPerIp[ip].size() <= maxRequests;
+            return ans;
+        }
+    }
+}
+
 std::vector<std::string> toArrayOfStrings(WsjcppYamlCursor values)
 {
     std::vector<std::string> ans;
@@ -68,6 +100,11 @@ std::vector<std::string> toArrayOfStrings(WsjcppYamlCursor values)
         ans.push_back(values[i]);
     }
     return ans;
+}
+
+RateLimiter::RateLimiter(std::string timeUnit, int timeInterval, int maxRequests, std::vector<std::string> identificationMethods)
+: timeUnit(timeUnit), timeInterval(timeInterval), maxRequests(maxRequests), identificationMethods(identificationMethods)
+{
 }
 
 RateLimiter::RateLimiter(std::string file)

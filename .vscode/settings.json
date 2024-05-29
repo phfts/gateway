@@ -79,6 +79,8 @@
         "numeric": "cpp",
         "random": "cpp",
         "algorithm": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "forward_list": "cpp",
+        "span": "cpp"
     }
 }

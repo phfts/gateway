@@ -19,12 +19,21 @@ int main(int argc, char const *argv[])
     {
         if (route->verb == "GET")
         {
-            svr.Get(route->path, [route](const httplib::Request &, httplib::Response &res) {
+            svr.Get(route->path, [route, &rateLimiter](const httplib::Request &req, httplib::Response &res) {
                 httplib::Client cli(route->targetHost);
+                std::string ip = req.remote_addr;
 
-                auto newRes = cli.Get(route->targetPath);
-                res.set_content(newRes->body, "text/plaintext"); // TODO: fix content type
-                // TODO: get status code
+                if (rateLimiter.checkGlobally(ip))
+                {
+                    auto newRes = cli.Get(route->targetPath);
+                    res.set_content(newRes->body, req.get_header_value("content-type"));
+                    res.status = newRes->status;
+                }
+                else
+                {
+                    res.status = 429;
+                    res.set_content("Rate limited", "text/plain");
+                }
             });
         }
     }
