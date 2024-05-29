@@ -1,0 +1,2 @@
+git git@github.com:yhirose/cpp-httplib.git
+git git@github.com:wsjcpp/wsjcpp-yaml.git
