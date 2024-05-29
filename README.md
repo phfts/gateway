@@ -15,6 +15,12 @@ global-rate-limit:
 $ make download
 ```
 
+3. Install openssl and check SSL_INCLUDE_PATH and SSL_LIB_PATH in `Makefile`
+```
+# osx users can use brew
+$ brew install openssl 
+```
+
 3. Run
 ```
 $ make run

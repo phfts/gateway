@@ -1,5 +1,8 @@
 .PHONY: download
 
+SSL_INCLUDE_PATH=/opt/homebrew/opt/openssl@3/include 
+SSL_LIB_PATH=/opt/homebrew/opt/openssl@3/lib
+
 download:
 	@rm -rf ./lib/
 	@mkdir lib
@@ -8,5 +11,5 @@ download:
 
 run:
 	mkdir -p bin
-	g++ src/main.cpp -std=c++17 -o bin/main
+	g++ src/main.cpp -std=c++17 -I$(SSL_INCLUDE_PATH) -L$(SSL_LIB_PATH) -o bin/main -lssl -lcrypto
 	./bin/main

@@ -1,8 +1,10 @@
+#pragma once
+
 #include <vector>
 #include <string>
-#include "../../lib/wsjcpp-yaml/src/wsjcpp_yaml.cpp"
 #include "../utils/string.cpp"
 #include "rate_limiter.h"
+#include "../config/yaml_loader.cpp"
 
 void RateLimiter::validateTimeUnit(std::string _timeUnit)
 {
@@ -70,16 +72,7 @@ std::vector<std::string> toArrayOfStrings(WsjcppYamlCursor values)
 
 RateLimiter::RateLimiter(std::string file)
 {
-    WsjcppYaml yaml;
-    std::string sYaml, sError;
-
-    sYaml = readFileToString(file);
-    if (!yaml.loadFromString(file, sYaml, sError))
-    {
-        yaml.throw_err("MAIN", sError);
-        throw std::runtime_error("Invalid file " + file);
-    }
-
+    WsjcppYaml yaml = loadYaml(file);
     if (!yaml["global-rate-limit"].isNull())
     {
         setHasGlobalLimit(true);

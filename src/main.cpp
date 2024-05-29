@@ -1,5 +1,8 @@
+#define CPPHTTPLIB_OPENSSL_SUPPORT
 #include "../lib/cpp-httplib/httplib.h"
 #include "rate-limiter/rate_limiter.cpp"
+#include "router/router.cpp"
+
 
 using namespace std;
 
@@ -7,14 +10,26 @@ using namespace std;
 int main(int argc, char const *argv[])
 {
     auto rateLimiter = RateLimiter("routes.yml");
+    auto router = Router("routes.yml");
 
-    // httplib::Server svr;
+    httplib::Server svr;
 
-    // int count = 0;
-    // svr.Get("/hi", [&count](const httplib::Request &, httplib::Response &res) {
-    //     res.set_content("Response number " + to_string(++count) + "\n", "text/plain");
-    // });
+    // TODO: only allow GET verbs
+    for (auto &route : router.getRoutes())
+    {
+        if (route->verb == "GET")
+        {
+            svr.Get(route->path, [route](const httplib::Request &, httplib::Response &res) {
+                httplib::Client cli(route->targetHost);
 
-    // svr.listen("0.0.0.0", 8080);
+                auto newRes = cli.Get(route->targetPath);
+                res.set_content(newRes->body, "text/plaintext"); // TODO: fix content type
+                // TODO: get status code
+            });
+        }
+    }
+    
+    std::cout << "Server started " << std::endl;
+    svr.listen("0.0.0.0", 8080);
     return 0;
 }

@@ -4,3 +4,10 @@ global-rate-limit:
   max_requests: 120
   identification_methods:
     - IP
+
+
+routes:
+  - path: /hi
+    target_host: https://www.google.com 
+    target_path: /
+    verb: GET
