@@ -14,3 +14,14 @@ std::string readFileToString(const std::string& filePath) {
     buffer << file.rdbuf();  // Read the file into the stringstream
     return buffer.str();  // Return the string from the stringstream
 }
+
+
+bool beginsWith(std::string main, std::string substr)
+{
+    for (int i = 0; i < substr.length(); i++)
+    {
+        if (main[i] != substr[i])
+            return false;
+    }
+    return true;
+}

@@ -9,3 +9,4 @@ routes:
   - path: /hi
     target_host: https://www.google.com 
     target_path: /
+    strip_path: true
