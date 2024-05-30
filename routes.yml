@@ -7,6 +7,6 @@ global-rate-limit:
 
 routes:
   - path: /hi
-    target_host: https://www.google.com 
+    target_host: https://www.airbnb.com 
     target_path: /
     strip_path: true

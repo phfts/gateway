@@ -5,111 +5,19 @@
 #include "../lib/cpp-httplib/httplib.h"
 #include "rate-limiter/rate_limiter.cpp"
 #include "router/router.cpp"
+#include "web-server/web_server.cpp"
 
 using namespace std;
-
-bool checkUserIsAllowed(RateLimiter &rateLimiter, const httplib::Request &req, httplib::Response &res)
-{
-    if (!rateLimiter.checkGlobally(req.remote_addr))
-    {
-        res.status = 429;
-        res.set_content("Rate limited", "text/plain");
-        return false;
-    }
-    return true;
-}
-
-
-void setupResponse(httplib::Response &res, httplib::Result &newRes, const httplib::Request &req)
-{
-    res.set_content(newRes->body, req.get_header_value("content-type"));
-    res.status = newRes->status;
-}
-
-// TODO: think about headers to redirect
-void getHandler(const httplib::Request &req, httplib::Response &res, Route *route, RateLimiter &rateLimiter)
-{
-    if (!checkUserIsAllowed(rateLimiter, req, res))
-        return;
-
-    httplib::Client cli(route->targetHost);
-    auto newPath = route->resolveRequestPath(req.path);
-
-    auto newRes = cli.Get(newPath, req.params, httplib::Headers {});
-    std::cout << "Redirected GET to " << newPath << " of host " << route->targetHost << " with params: ";
-    for (auto &param : req.params)
-    {
-        std::cout << " { " << param.first << " : " << param.second << " } ";
-    }
-    std::cout << std::endl;
-    setupResponse(res, newRes, req);
-}
 
 
 int main(int argc, char const *argv[])
 {
     auto rateLimiter = RateLimiter("routes.yml");
     auto router = Router("routes.yml");
+    std::vector<Route*> routes = router.getRoutes();
+    
+    auto server = WebServer(routes, rateLimiter);
+    server.start();
 
-    httplib::Server svr;
-
-    // TODO: deal with files
-    // TODO: handle paths better (stripping)
-    for (auto &route : router.getRoutes())
-    {
-        std::vector<std::string> patterns = {string(route->path) + "/.*", route->path};
-        for (auto &pattern : patterns)
-        {
-            svr.Get(pattern, [route, &rateLimiter](const httplib::Request &req, httplib::Response &res)
-            {
-                getHandler(req, res, route, rateLimiter);
-            });
-
-            // svr.Post(route->path, [route, &rateLimiter](const httplib::Request &req, httplib::Response &res)
-            // {
-            //     if (!checkUserIsAllowed(rateLimiter, req, res))
-            //         return;
-
-            //     httplib::Client cli(route->targetHost);
-            //     auto newRes = cli.Post(route->targetPath, req.headers, req.body, req.get_header_value("content-type"));
-            //     setupResponse(res, newRes, req);
-            // });
-
-            // svr.Patch(route->path, [route, &rateLimiter](const httplib::Request &req, httplib::Response &res)
-            // {
-            //     if (!checkUserIsAllowed(rateLimiter, req, res))
-            //         return;
-
-            //     httplib::Client cli(route->targetHost);
-            //     auto newRes = cli.Patch(route->targetPath, req.headers, req.body, req.get_header_value("content-type"));
-            //     setupResponse(res, newRes, req);
-            // });
-
-
-            // svr.Put(route->path, [route, &rateLimiter](const httplib::Request &req, httplib::Response &res)
-            // {
-            //     if (!checkUserIsAllowed(rateLimiter, req, res))
-            //         return;
-
-            //     httplib::Client cli(route->targetHost);
-            //     auto newRes = cli.Put(route->targetPath, req.headers, req.body, req.get_header_value("content-type"));
-            //     setupResponse(res, newRes, req);
-            // });  
-
-            // svr.Delete(route->path, [route, &rateLimiter](const httplib::Request &req, httplib::Response &res)
-            // {
-            //     if (!checkUserIsAllowed(rateLimiter, req, res))
-            //         return;
-
-            //     httplib::Client cli(route->targetHost);
-            //     auto newRes = cli.Delete(route->targetPath, req.headers);
-            //     setupResponse(res, newRes, req);
-            // });   
-        }     
-    }
-
-    std::cout << "Server started " << std::endl;
-
-    svr.listen("0.0.0.0", 8080);
     return 0;
 }
