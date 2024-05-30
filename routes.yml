@@ -9,4 +9,3 @@ routes:
   - path: /hi
     target_host: https://www.google.com 
     target_path: /
-    verb: GET

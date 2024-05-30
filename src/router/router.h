@@ -5,7 +5,6 @@
 
 struct Route
 {
-    std::string verb;
     std::string path;
     std::string targetHost;
     std::string targetPath;

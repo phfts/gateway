@@ -15,7 +15,6 @@ Router::Router(std::string file)
             route->path = yaml["routes"][i]["path"].valStr();
             route->targetHost = yaml["routes"][i]["target_host"].valStr();
             route->targetPath = yaml["routes"][i]["target_path"].valStr();
-            route->verb = yaml["routes"][i]["verb"].valStr();
             routes.push_back(route);
         }
     }
