@@ -6,10 +6,10 @@ GTEST_INCLUDE_PATH=/opt/homebrew/Cellar/googletest/1.14.0/include
 GTEST_LIB_PATH=/opt/homebrew/Cellar/googletest/1.14.0/lib
 
 download:
-	@rm -rf ./lib/
-	@mkdir lib
-	@if [ -n "$$(tail -c 1 requirements.txt)" ]; then echo >> requirements.txt; fi
-	@while read -r line; do test -e "$$line"; line=$$(echo "$$line" | sed 's/git //'); cd lib; git clone "$$line"; cd ..; done < requirements.txt
+	rm -rf ./lib/
+	mkdir lib
+	if [ -n "$$(tail -c 1 requirements.txt)" ]; then echo >> requirements.txt; fi
+	while read -r line; do test -e "$$line"; line=$$(echo "$$line" | sed 's/git //'); cd lib; git clone "$$line"; cd ..; done < requirements.txt
 
 build-deps:
 	cd lib/hiredis && make install

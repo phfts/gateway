@@ -9,7 +9,6 @@ using namespace sw::redis;
 class SlidingWindowLog
 {
 private:
-    std::map<std::string, std::vector<int>> timestampsPerIp;
     int timeInterval;
     int maxRequests;
     std::shared_ptr<Redis> redis;

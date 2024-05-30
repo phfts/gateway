@@ -1,10 +1,9 @@
 global-rate-limit:
   time_unit: minute
   time_interval: 1
-  max_requests: 3
+  max_requests: 60
   identification_methods:
     - IP
-
 
 routes:
   - path: /hi
