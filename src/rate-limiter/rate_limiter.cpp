@@ -81,7 +81,7 @@ std::vector<std::string> toArrayOfStrings(WsjcppYamlCursor values)
 RateLimiter::RateLimiter(std::string timeUnit, int timeInterval, int maxRequests, std::vector<std::string> identificationMethods)
 : timeUnit(timeUnit), timeInterval(timeInterval), maxRequests(maxRequests), identificationMethods(identificationMethods)
 {
-    slidingWindowLog = new SlidingWindowLog(timeInterval, maxRequests);
+    slidingWindowLog = new SlidingWindowLog(getRateLimitIntervalInSeconds(), maxRequests);
 }
 
 RateLimiter::RateLimiter(std::string file)
@@ -94,7 +94,7 @@ RateLimiter::RateLimiter(std::string file)
         setTimeInterval(yaml["global-rate-limit"]["time_interval"].valInt());
         setMaxRequests(yaml["global-rate-limit"]["max_requests"].valInt());
         setIdentificationMethods(toArrayOfStrings(yaml["global-rate-limit"]["identification_methods"]));
-        slidingWindowLog = new SlidingWindowLog(timeInterval, maxRequests);
+        slidingWindowLog = new SlidingWindowLog(getRateLimitIntervalInSeconds(), maxRequests);
     }
     else
     {
