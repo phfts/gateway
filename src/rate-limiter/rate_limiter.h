@@ -1,7 +1,9 @@
 #pragma once
+
 #include <string>
 #include <vector>
 #include <map>
+#include "./algorithms/sliding_window_log.cpp"
 
 class RateLimiter
 {
@@ -11,7 +13,7 @@ private:
     int timeInterval;
     int maxRequests;
     std::vector<std::string> identificationMethods;
-    std::map<std::string, std::vector<int>> timestampsPerIp; 
+    SlidingWindowLog *slidingWindowLog; // TODO: fix to use Dependency Injection
 
     void validateTimeUnit(std::string _timeUnit);
     void validateIdentificationMethod(std::string idMethod);

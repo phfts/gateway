@@ -63,33 +63,9 @@ int RateLimiter::getRateLimitIntervalInSeconds()
 
 bool RateLimiter::checkGlobally(std::string ip)
 {
+    
     int timestamp = getCurrentTimestamp();
-    if (timestampsPerIp[ip].empty())
-    {
-        timestampsPerIp[ip].push_back(timestamp);
-        return true;
-    }
-    else
-    {
-        int firstTimestamp = timestampsPerIp[ip][0];
-        if (timestamp - firstTimestamp > this->getRateLimitIntervalInSeconds())
-        {
-            timestampsPerIp[ip].push_back(timestamp);
-            while (!timestampsPerIp[ip].empty() && (timestamp -  timestampsPerIp[ip][0] > this->getRateLimitIntervalInSeconds()))
-            {
-                // TODO: O(N^2). Bad because can contain bursts. Use sorted set from redis
-                timestampsPerIp[ip].erase(timestampsPerIp[ip].begin());
-            }
-            
-            return true;
-        }
-        else
-        {
-            timestampsPerIp[ip].push_back(timestamp);
-            bool ans = timestampsPerIp[ip].size() <= maxRequests;
-            return ans;
-        }
-    }
+    return slidingWindowLog->checkGlobally(ip, timestamp);
 }
 
 std::vector<std::string> toArrayOfStrings(WsjcppYamlCursor values)
@@ -105,6 +81,7 @@ std::vector<std::string> toArrayOfStrings(WsjcppYamlCursor values)
 RateLimiter::RateLimiter(std::string timeUnit, int timeInterval, int maxRequests, std::vector<std::string> identificationMethods)
 : timeUnit(timeUnit), timeInterval(timeInterval), maxRequests(maxRequests), identificationMethods(identificationMethods)
 {
+    slidingWindowLog = new SlidingWindowLog(timeInterval, maxRequests);
 }
 
 RateLimiter::RateLimiter(std::string file)
@@ -117,6 +94,7 @@ RateLimiter::RateLimiter(std::string file)
         setTimeInterval(yaml["global-rate-limit"]["time_interval"].valInt());
         setMaxRequests(yaml["global-rate-limit"]["max_requests"].valInt());
         setIdentificationMethods(toArrayOfStrings(yaml["global-rate-limit"]["identification_methods"]));
+        slidingWindowLog = new SlidingWindowLog(timeInterval, maxRequests);
     }
     else
     {
