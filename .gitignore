@@ -1,2 +1,4 @@
-lib/
 bin/
+lib/
+**.rdb
+.vscode/

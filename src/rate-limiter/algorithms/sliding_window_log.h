@@ -1,6 +1,10 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <sw/redis++/redis++.h>
+#include <sw/redis++/patterns/redlock.h>
+
+using namespace sw::redis;
 
 class SlidingWindowLog
 {
@@ -8,12 +12,8 @@ private:
     std::map<std::string, std::vector<int>> timestampsPerIp;
     int timeInterval;
     int maxRequests;
-    void clean(std::string id, int timestamp);
-
-    std::chrono::high_resolution_clock::time_point startClock();
-    void finishClockAndLog(std::chrono::high_resolution_clock::time_point startTime);
-
+    std::shared_ptr<Redis> redis;
 public:
-    SlidingWindowLog(int timeInterval, int maxRequests) : timeInterval(timeInterval), maxRequests(maxRequests) {}
+    SlidingWindowLog(int timeInterval, int maxRequests);
     bool checkGlobally(std::string id, int timestamp);
 };

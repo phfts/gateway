@@ -81,6 +81,8 @@
         "algorithm": "cpp",
         "filesystem": "cpp",
         "forward_list": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "coroutine": "cpp",
+        "queue": "cpp"
     }
 }

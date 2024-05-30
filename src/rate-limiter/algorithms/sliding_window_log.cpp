@@ -3,47 +3,39 @@
 
 #include "sliding_window_log.h"
 
-void SlidingWindowLog::clean(std::string id, int timestamp)
+SlidingWindowLog::SlidingWindowLog(int timeInterval, int maxRequests)
+    : timeInterval(timeInterval), maxRequests(maxRequests)
 {
-    while (!timestampsPerIp[id].empty() && (timestamp - timestampsPerIp[id][0] > timeInterval))
-    {
-        // TODO: O(N^2). Bad because can contain bursts. Use sorted set from redis
-        timestampsPerIp[id].erase(timestampsPerIp[id].begin());
-    }
-}
-
-std::chrono::high_resolution_clock::time_point SlidingWindowLog::startClock()
-{
-    return std::chrono::high_resolution_clock::now();
-}
-
-void SlidingWindowLog::finishClockAndLog(std::chrono::high_resolution_clock::time_point startTime)
-{
-    auto endTime = std::chrono::high_resolution_clock::now();
-    double elapsed_time_ms = std::chrono::duration<double, std::milli>(endTime - startTime).count();
-    std::cout << "Process time was " << elapsed_time_ms << "ms" << std::endl;
+    redis = std::make_shared<Redis>("tcp://127.0.0.1:6379");
 }
 
 bool SlidingWindowLog::checkGlobally(std::string id, int timestamp)
 {
-    auto startTime = startClock();
-    if (timestampsPerIp[id].empty())
+    RedLockMutex mtx(redis, "rate_limiter_lock_user_" + id);
+    RedLock<RedLockMutex> lock(mtx, std::defer_lock);
+    
+    try
     {
-        timestampsPerIp[id].push_back(timestamp);
-        finishClockAndLog(startTime);
+        lock.try_lock(std::chrono::seconds(10));
+        redis->zincrby(id, 1, std::to_string(timestamp));
+        redis->zrem(id, std::initializer_list<int>{0, timestamp - timeInterval});
 
-        return true;
+        std::vector<std::pair<std::string, double>> zset_result;
+        redis->zrangebyscore(id, UnboundedInterval<double>{}, std::back_inserter(zset_result));
+
+        double sum = 0;
+        for (auto x : zset_result)
+        {
+            sum += x.second;
+        }
+
+        lock.unlock();
+        return sum <= maxRequests;
     }
-
-    clean(id, timestamp);
-    int firstTimestamp = timestampsPerIp[id][0];
-    if (timestampsPerIp[id].size() < maxRequests)
+    catch (const std::exception &e)
     {
-        timestampsPerIp[id].push_back(timestamp);
-        finishClockAndLog(startTime);
-        return true;
+        lock.unlock();
+        std::cerr << e.what() << '\n';
     }
-
-    finishClockAndLog(startTime);
-    return false;
 }
+
